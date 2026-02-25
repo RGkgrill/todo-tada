@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To Do · Ta-da</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #faf7f2;
+    --warm-white: #fff9f4;
+    --ink: #1a1612;
+    --ink-light: #4a3f35;
+    --ink-faint: #9a8f85;
+    --blush: #e8c4b0;
+    --blush-dark: #d4a08a;
+    --sage: #b5c4b1;
+    --sage-dark: #8aab85;
+    --gold: #c9a96e;
+    --gold-light: #e8d5b0;
+    --border: #e2d8d0;
+    --shadow: rgba(26,22,18,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--warm-white);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 40px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px var(--shadow);
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    color: var(--ink-faint);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    justify-self: start;
+  }
+
+  .header-right {
+    justify-self: start;
+    padding-left: 8px;
+  }
+
+  /* ── DATE NAV ── */
+  .date-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    justify-content: center;
+  }
+
+  .date-nav button {
+    background: none;
+    border: 1.5px solid var(--border);
+    color: var(--ink-light);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .date-nav button:hover { background: var(--cream); border-color: var(--gold); color: var(--ink); }
+  .date-nav button:disabled { opacity: 0.25; cursor: default; }
+
+  #current-date-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--ink);
+    width: 220px;
+    text-align: center;
+    letter-spacing: 0.3px;
+  }
+
+  .today-badge {
+    font-size: 10px;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--gold);
+    color: var(--ink);
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 500;
+    width: 48px;
+    text-align: center;
+  }
+
+  /* ── SHEET CONFIG ── */
+  .sheet-bar {
+    background: var(--cream);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+
+  .sheet-bar input {
+    background: var(--warm-white);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: monospace;
+    width: 340px;
+  }
+
+  .sheet-bar button {
+    background: var(--ink);
+    color: var(--cream);
+    border: none;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .sheet-bar button:hover { opacity: 0.8; }
+
+  #sync-status {
+    margin-left: auto;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #555; }
+  .dot.connected { background: var(--sage-dark); }
+  .dot.error { background: #c0504d; }
+
+  /* ── MAIN LAYOUT ── */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  .sections-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+
+  @media (max-width: 768px) { .sections-grid { grid-template-columns: 1fr; } }
+
+  /* ── SECTION CARD ── */
+  .section-card {
+    background: var(--warm-white);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 16px var(--shadow);
+    border: 1px solid var(--border);
+  }
+
+  .section-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .section-title.personal { color: #7a5c4a; }
+  .section-title.professional { color: #3d5c4a; }
+
+  .section-icon { font-size: 20px; }
+
+  /* ── COLUMNS ── */
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+
+  .col {
+    padding: 18px 20px;
+  }
+
+  .col:first-child {
+    border-right: 1px solid var(--border);
+  }
+
+  .col-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .col-label.todo-label { color: var(--blush-dark); }
+  .col-label.tada-label { color: var(--sage-dark); }
+
+  /* ── TASK ITEMS ── */
+  .task-list { list-style: none; min-height: 60px; }
+
+  .task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0ebe4;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-radius: 6px;
+    padding: 8px 6px;
+  }
+
+  .task-item:hover { background: #f5f0ea; }
+  .task-item:last-child { border-bottom: none; }
+
+  .task-check {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--blush-dark);
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .task-item.done .task-check {
+    background: var(--sage);
+    border-color: var(--sage-dark);
+  }
+
+  .task-item.done .task-check::after {
+    content: '✓';
+    font-size: 11px;
+    color: white;
+  }
+
+  .task-text {
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: var(--ink-light);
+    flex: 1;
+  }
+
+  .task-item.done .task-text {
+    text-decoration: line-through;
+    color: var(--ink-faint);
+  }
+
+  .task-delete {
+    opacity: 0;
+    cursor: pointer;
+    color: var(--ink-faint);
+    font-size: 14px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: all 0.15s;
+    background: none;
+    border: none;
+  }
+
+  .task-item:hover .task-delete { opacity: 0.5; }
+  .task-item:hover .task-delete:hover { opacity: 1; color: #c0504d; }
+
+  /* ── ADD TASK ── */
+  .add-task-row {
+    padding: 10px 20px 16px;
+    display: flex;
+    gap: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .add-task-input {
+    flex: 1;
+    border: 1px solid var(--border);
+    background: var(--cream);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .add-task-input:focus { border-color: var(--gold); }
+  .add-task-input::placeholder { color: var(--ink-faint); }
+
+  .add-task-btn {
+    background: var(--ink);
+    color: var(--gold-light);
+    border: none;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .add-task-btn:hover { background: #2a2018; }
+
+  /* ── ROLLOVER BANNER ── */
+  .rollover-bar {
+    background: linear-gradient(135deg, #fdf6ee, #f5ede0);
+    border: 1px solid var(--gold-light);
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .rollover-bar p {
+    font-size: 13px;
+    color: var(--ink-light);
+  }
+
+  .rollover-bar strong { color: var(--ink); }
+
+  .rollover-btn {
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .rollover-btn:hover { opacity: 0.85; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 20px 10px;
+    color: var(--ink-faint);
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: var(--cream);
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(26,22,18,0.5);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 500;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--warm-white);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .modal h2 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 12px; }
+  .modal p { font-size: 13.5px; color: var(--ink-light); line-height: 1.6; margin-bottom: 10px; }
+  .modal code {
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    display: block;
+    margin: 8px 0;
+    word-break: break-all;
+  }
+  .modal-close {
+    margin-top: 20px;
+    background: var(--ink);
+    color: var(--cream);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">To Do · Ta-da</div>
+  <div class="date-nav">
+    <button id="prev-day" title="Previous day">‹</button>
+    <div id="current-date-label">—</div>
+    <button id="next-day" title="Next day">›</button>
+  </div>
+  <div class="header-right">
+    <span id="today-badge" class="today-badge" style="visibility:hidden">Today</span>
+  </div>
+</header>
+
+<!-- SHEET CONFIG BAR -->
+<div class="sheet-bar">
+  <span>Google Sheet ID:</span>
+  <input type="text" id="sheet-id-input" placeholder="Paste your Google Sheet ID here…" value="https://script.google.com/macros/s/AKfycbwS14GiCh2zDwk21oHTc1Eq9P8TAguinrtupFziiCK1wk_zhi-FKxGJ9gk6Hyo5sNyeUA/exec" />
+  <button onclick="connectSheet()">Connect</button>
+  <div id="sync-status">
+    <div class="dot" id="sync-dot"></div>
+    <span id="sync-label">Not connected — using local storage</span>
+  </div>
+  <button onclick="openSetupModal()" style="background:var(--border); color:var(--ink-light); margin-left:8px;">Setup Help</button>
+</div>
+
+<!-- MAIN -->
+<main>
+  <div id="rollover-banner" class="rollover-bar" style="display:none">
+    <p>You have <strong id="rollover-count">0</strong> incomplete tasks from yesterday. Roll them over to today?</p>
+    <button class="rollover-btn" onclick="rolloverTasks()">Roll Over ↓</button>
+  </div>
+
+  <div class="sections-grid">
+    <!-- PERSONAL -->
+    <div class="section-card" id="personal-card">
+      <div class="section-header">
+        <div class="section-title personal">Personal</div>
+        <span class="section-icon">🌸</span>
+      </div>
+      <div class="columns">
+        <div class="col">
+          <div class="col-label todo-label">● To Do</div>
+          <ul class="task-list" id="personal-todo"></ul>
+        </div>
+        <div class="col">
+          <div class="col-label tada-label">✓ Ta-da!</div>
+          <ul class="task-list" id="personal-tada"></ul>
+        </div>
+      </div>
+      <div class="add-task-row">
+        <input class="add-task-input" id="personal-input" placeholder="Add a personal task…" onkeydown="if(event.key==='Enter') addTask('personal')" />
+        <button class="add-task-btn" onclick="addTask('personal')">+</button>
+      </div>
+    </div>
+
+    <!-- PROFESSIONAL -->
+    <div class="section-card" id="professional-card">
+      <div class="section-header">
+        <div class="section-title professional">Professional</div>
+        <span class="section-icon">📖</span>
+      </div>
+      <div class="columns">
+        <div class="col">
+          <div class="col-label todo-label">● To Do</div>
+          <ul class="task-list" id="professional-todo"></ul>
+        </div>
+        <div class="col">
+          <div class="col-label tada-label">✓ Ta-da!</div>
+          <ul class="task-list" id="professional-tada"></ul>
+        </div>
+      </div>
+      <div class="add-task-row">
+        <input class="add-task-input" id="professional-input" placeholder="Add a professional task…" onkeydown="if(event.key==='Enter') addTask('professional')" />
+        <button class="add-task-btn" onclick="addTask('professional')">+</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- SETUP MODAL -->
+<div class="modal-overlay" id="setup-modal">
+  <div class="modal">
+    <h2>Connecting Google Sheets</h2>
+    <p>This is a one-time setup. Follow these steps:</p>
+    <p><strong>1.</strong> Create a new Google Sheet at <a href="https://sheets.new" target="_blank" style="color:var(--gold)">sheets.new</a></p>
+    <p><strong>2.</strong> Copy the Sheet ID from the URL — it's the long string between <code>/d/</code> and <code>/edit</code></p>
+    <p><strong>3.</strong> Go to <strong>Extensions → Apps Script</strong> in your Sheet</p>
+    <p><strong>4.</strong> Paste the Apps Script code (ask your assistant for the code snippet)</p>
+    <p><strong>5.</strong> Deploy as a Web App, copy the URL, and paste it as your Sheet ID above</p>
+    <p style="margin-top:12px; font-size:12px; color:var(--ink-faint)">Until connected, all tasks save to your browser's local storage and will persist between sessions on this device.</p>
+    <button class="modal-close" onclick="closeSetupModal()">Got it</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  DATA MODEL
+//  data[dateKey] = { personal: { todo: [], tada: [] }, professional: { todo: [], tada: [] } }
+//  dateKey = "YYYY-MM-DD"
+// ─────────────────────────────────────────────
+
+const STORAGE_KEY = 'todotada_tasks_v1';
+const SHEET_KEY   = 'todotada_sheet_url';
+
+let currentDate = new Date();
+currentDate.setHours(0,0,0,0);
+
+let sheetUrl = localStorage.getItem(SHEET_KEY) || 'https://script.google.com/macros/s/AKfycbwS14GiCh2zDwk21oHTc1Eq9P8TAguinrtupFziiCK1wk_zhi-FKxGJ9gk6Hyo5sNyeUA/exec';
+let data = {};
+
+// ── INIT ──
+function init() {
+  loadLocalData();
+  if (sheetUrl) {
+    document.getElementById('sheet-id-input').value = sheetUrl;
+    syncFromSheet();
+  }
+  renderDateNav();
+  renderAll();
+  checkRollover();
+}
+
+// ── LOCAL STORAGE ──
+function loadLocalData() {
+  try { data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch { data = {}; }
+}
+
+function saveLocalData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getDateKey(d) {
+  return d.toISOString().split('T')[0];
+}
+
+function getDayData(d) {
+  const k = getDateKey(d);
+  if (!data[k]) {
+    data[k] = {
+      personal:     { todo: [], tada: [] },
+      professional: { todo: [], tada: [] }
+    };
+  }
+  return data[k];
+}
+
+// ── DATE NAV ──
+function renderDateNav() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const isToday = currentDate.getTime() === today.getTime();
+  const label = isToday ? 'Today' : formatDate(currentDate);
+  document.getElementById('current-date-label').textContent = label;
+  document.getElementById('today-badge').style.visibility = isToday ? 'visible' : 'hidden';
+  document.getElementById('next-day').disabled = isToday;
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+document.getElementById('prev-day').addEventListener('click', () => {
+  currentDate.setDate(currentDate.getDate() - 1);
+  renderDateNav();
+  renderAll();
+  checkRollover();
+});
+
+document.getElementById('next-day').addEventListener('click', () => {
+  currentDate.setDate(currentDate.getDate() + 1);
+  renderDateNav();
+  renderAll();
+  checkRollover();
+});
+
+// ── ROLLOVER ──
+function checkRollover() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const isToday = currentDate.getTime() === today.getTime();
+  if (!isToday) { document.getElementById('rollover-banner').style.display = 'none'; return; }
+
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  const yKey = getDateKey(yesterday);
+  const yData = data[yKey];
+  if (!yData) { document.getElementById('rollover-banner').style.display = 'none'; return; }
+
+  const incomplete = (yData.personal?.todo?.length || 0) + (yData.professional?.todo?.length || 0);
+  if (incomplete === 0) { document.getElementById('rollover-banner').style.display = 'none'; return; }
+
+  document.getElementById('rollover-count').textContent = incomplete;
+  document.getElementById('rollover-banner').style.display = 'flex';
+}
+
+function rolloverTasks() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+  const yData = data[getDateKey(yesterday)];
+  if (!yData) return;
+
+  const todayData = getDayData(today);
+  const existingPersonalTodo = todayData.personal.todo.map(t => t.text);
+  const existingProfTodo = todayData.professional.todo.map(t => t.text);
+
+  yData.personal.todo.forEach(t => {
+    if (!existingPersonalTodo.includes(t.text)) todayData.personal.todo.push({ ...t, id: uid() });
+  });
+  yData.professional.todo.forEach(t => {
+    if (!existingProfTodo.includes(t.text)) todayData.professional.todo.push({ ...t, id: uid() });
+  });
+
+  saveLocalData();
+  syncToSheet();
+  renderAll();
+  document.getElementById('rollover-banner').style.display = 'none';
+  toast('Tasks rolled over ✓');
+}
+
+// ── RENDER ──
+function renderAll() {
+  const d = getDayData(currentDate);
+  renderList('personal-todo',     d.personal.todo,     'personal',     false);
+  renderList('personal-tada',     d.personal.tada,     'personal',     true);
+  renderList('professional-todo', d.professional.todo, 'professional', false);
+  renderList('professional-tada', d.professional.tada, 'professional', true);
+}
+
+function renderList(elId, tasks, section, isDone) {
+  const el = document.getElementById(elId);
+  el.innerHTML = '';
+  if (!tasks.length) {
+    el.innerHTML = `<li class="empty-state">${isDone ? 'Nothing yet—go get it!' : 'Clear!'}</li>`;
+    return;
+  }
+  tasks.forEach(task => {
+    const li = document.createElement('li');
+    li.className = 'task-item' + (isDone ? ' done' : '');
+    li.innerHTML = `
+      <div class="task-check"></div>
+      <span class="task-text">${escHtml(task.text)}</span>
+      <button class="task-delete" onclick="deleteTask('${section}','${task.id}','${isDone}',event)" title="Remove">✕</button>
+    `;
+    li.addEventListener('click', e => {
+      if (e.target.classList.contains('task-delete')) return;
+      toggleTask(section, task.id, isDone);
+    });
+    el.appendChild(li);
+  });
+}
+
+// ── TASK OPS ──
+function uid() { return Math.random().toString(36).slice(2,10); }
+
+function addTask(section) {
+  const input = document.getElementById(`${section}-input`);
+  const text = input.value.trim();
+  if (!text) return;
+  const d = getDayData(currentDate);
+  d[section].todo.push({ id: uid(), text, created: new Date().toISOString() });
+  input.value = '';
+  saveLocalData();
+  syncToSheet();
+  renderAll();
+}
+
+function toggleTask(section, id, currentlyDone) {
+  const d = getDayData(currentDate);
+  const src = currentlyDone ? d[section].tada : d[section].todo;
+  const dst = currentlyDone ? d[section].todo : d[section].tada;
+  const idx = src.findIndex(t => t.id === id);
+  if (idx === -1) return;
+  const [task] = src.splice(idx, 1);
+  dst.push(task);
+  saveLocalData();
+  syncToSheet();
+  renderAll();
+  if (!currentlyDone) toast('Ta-da! ✨');
+}
+
+function deleteTask(section, id, isDone, e) {
+  e.stopPropagation();
+  const d = getDayData(currentDate);
+  const list = isDone === 'true' ? d[section].tada : d[section].todo;
+  const idx = list.findIndex(t => t.id === id);
+  if (idx !== -1) list.splice(idx, 1);
+  saveLocalData();
+  syncToSheet();
+  renderAll();
+}
+
+// ── GOOGLE SHEETS SYNC ──
+// Uses a deployed Google Apps Script Web App as the backend.
+// The script accepts GET (read) and POST (write) with the full data blob.
+
+function connectSheet() {
+  const val = document.getElementById('sheet-id-input').value.trim();
+  if (!val) return;
+  sheetUrl = val;
+  localStorage.setItem(SHEET_KEY, sheetUrl);
+  syncFromSheet();
+}
+
+async function syncFromSheet() {
+  if (!sheetUrl) return;
+  setSyncStatus('syncing');
+  try {
+    const res = await fetch(sheetUrl + '?action=read', { mode: 'cors' });
+    if (!res.ok) throw new Error('fetch failed');
+    const remote = await res.json();
+    // Merge: remote wins for any date that exists remotely
+    Object.assign(data, remote);
+    saveLocalData();
+    setSyncStatus('connected');
+    renderAll();
+    checkRollover();
+  } catch (err) {
+    setSyncStatus('error');
+  }
+}
+
+async function syncToSheet() {
+  if (!sheetUrl) return;
+  try {
+    await fetch(sheetUrl, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'write', data })
+    });
+    setSyncStatus('connected');
+  } catch {
+    setSyncStatus('error');
+  }
+}
+
+function setSyncStatus(state) {
+  const dot = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  dot.className = 'dot';
+  if (state === 'connected') { dot.classList.add('connected'); label.textContent = 'Synced to Google Sheets'; }
+  else if (state === 'error')  { dot.classList.add('error');     label.textContent = 'Sync error — saving locally'; }
+  else { label.textContent = 'Syncing…'; }
+}
+
+// ── MODAL ──
+function openSetupModal()  { document.getElementById('setup-modal').classList.add('open'); }
+function closeSetupModal() { document.getElementById('setup-modal').classList.remove('open'); }
+
+// ── TOAST ──
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ── UTILS ──
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── START ──
+init();
+</script>
+</body>
+</html>
